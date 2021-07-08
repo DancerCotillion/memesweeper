@@ -20,12 +20,13 @@
  ******************************************************************************************/
 #include "MainWindow.h"
 #include "Game.h"
+#include "SpriteCodex.h"
 
 Game::Game( MainWindow& wnd )
 	:
 	wnd( wnd ),
 	gfx( wnd ),
-	field(20)
+	field(gfx.GetRect().GetCenter(), 40)
 {
 }
 
@@ -39,9 +40,36 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
+	while (!wnd.mouse.IsEmpty())
+	{
+		const auto e = wnd.mouse.Read();
+		if (field.GetState() == Minefield::State::Mining)
+		{
+			if (e.GetType() == Mouse::Event::Type::LPress)
+			{
+				Vei2 mousePoint = e.GetPos();
+				if (field.GetRect().Contains(mousePoint))
+				{
+					field.onRevealClick(wnd.mouse.GetPos());
+				}
+			}
+			else if (e.GetType() == Mouse::Event::Type::RPress)
+			{
+				Vei2 mousePoint = e.GetPos();
+				if (field.GetRect().Contains(mousePoint))
+				{
+					field.onFlagClick(wnd.mouse.GetPos());
+				}
+			}
+		}
+	}
 }
 
 void Game::ComposeFrame()
 {
 	field.Draw(gfx); 
+	if (field.GetState() == Minefield::State::Won)
+	{
+		SpriteCodex::DrawWin(gfx.GetRect().GetCenter(), gfx); 
+	}
 }
